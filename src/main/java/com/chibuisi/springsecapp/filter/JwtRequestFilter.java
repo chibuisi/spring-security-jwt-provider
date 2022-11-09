@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -26,7 +25,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 	private JwtUtil jwtUtil;
 	
 	@Autowired
-	private MyUserDetailsService MyUserDetailsService;
+	private MyUserDetailsService myUserDetailsService;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -42,7 +41,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 		}
 		
 		if(username != null && SecurityContextHolder.getContext() != null) {
-			UserDetails userDetails = MyUserDetailsService.loadUserByUsername(username);
+			UserDetails userDetails = myUserDetailsService.loadUserByUsername(username);
 			if(jwtUtil.validateToken(jwt, userDetails)) {
 				UsernamePasswordAuthenticationToken token = 
 						new UsernamePasswordAuthenticationToken(username, null, userDetails.getAuthorities());

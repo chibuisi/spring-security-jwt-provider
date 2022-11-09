@@ -1,10 +1,9 @@
 package com.chibuisi.springsecapp.repository;
 
+import com.chibuisi.springsecapp.model.UserAccount;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.chibuisi.springsecapp.model.MyUser;
 
-
-public interface UserRepository extends JpaRepository<MyUser, Long> {
-	public MyUser findByUsername(String username);
+public interface UserRepository extends JpaRepository<UserAccount, Long> {
+	public UserAccount findByUsername(String username);
 }

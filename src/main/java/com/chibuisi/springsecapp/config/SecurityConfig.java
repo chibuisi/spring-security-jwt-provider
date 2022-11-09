@@ -45,14 +45,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	    // Disable CSRF (cross site request forgery)
 	    http.csrf().disable();
 
-	    
 		http.authorizeRequests()
-//		.antMatchers("/admin").hasRole("ADMIN")
-//		.antMatchers("/user").hasRole("USER")
-//		.antMatchers("/manager").hasRole("MANAGER")
-		.antMatchers("/authenticate","/","/users/signup").permitAll()
-		.anyRequest().authenticated();
-		//.and().formLogin();
+		.antMatchers("/admin").hasRole("ADMIN")
+		.antMatchers("/user").hasRole("USER")
+		.antMatchers("/manager").hasRole("MANAGER")
+		.antMatchers("/authenticate","/","/users/signup", "/index", "/home").permitAll()
+		.antMatchers("/oauth2/**").permitAll()
+				.anyRequest().authenticated()
+				.and().oauth2Login()
+		.and().formLogin();
 		
 		// No session will be created or used by spring security
 	    http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);	  
@@ -74,8 +75,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	        .antMatchers("/swagger-ui.html")//
 	        .antMatchers("/configuration/**")//
 	        .antMatchers("/webjars/**")//
-	        .antMatchers("/public")
-	        
+	        .antMatchers("/public/**")
+				.antMatchers("/static/**")
+
 	        // Un-secure H2 Database (for testing purposes, H2 console shouldn't be unprotected in production)
 	        .and()
 	        .ignoring()
