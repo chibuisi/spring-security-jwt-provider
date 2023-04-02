@@ -1,51 +1,36 @@
 package com.chibuisi.springsecapp.util;
 
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.interfaces.RSAPublicKey;
-import java.security.spec.*;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.logging.Logger;
-
-import javax.annotation.PostConstruct;
-
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.interfaces.DecodedJWT;
+import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
+
+import javax.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Component
 public class JwtUtil {
 	private Logger log = Logger.getLogger("HomeResource");
-	@Value("${key_token}")
+	@Value("${app.key_token}")
 	private String SECRET_KEY;
-	
-	  @PostConstruct
-	  protected void init() {
-		  SECRET_KEY = Base64.getEncoder().encodeToString(SECRET_KEY.getBytes());
-		  byte[] key = Base64.getDecoder().decode(SECRET_KEY.getBytes());
-		  String value = new String(key, StandardCharsets.UTF_8);
-	  }
-	
+//	@Value("${app.jwtExpirationMs}")
+//	private String JWT_EXPIRATION_MS;
+
+	private static final Logger logger = Logger.getLogger(JwtUtil.class.getSimpleName());
+
 	private String createToken(Map<String,Object> claims, String subject) {
 		return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-				.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
-				.setIssuer("chibuisi").signWith(SignatureAlgorithm.HS256, SECRET_KEY).compact();
+				.setExpiration(new Date(System.currentTimeMillis() + 43200000))
+				.setIssuer("api.minor-insights.com").signWith(SignatureAlgorithm.HS512, SECRET_KEY).compact();
 	}
 	
 	public String generateToken(UserDetails userDetails) {
@@ -54,12 +39,27 @@ public class JwtUtil {
 //				.map(s -> new SimpleGrantedAuthority(s.getAuthority()))
 //				.filter(Objects::nonNull).collect(Collectors.toList()));
 		String [] authorities = userDetails.getAuthorities().stream().map(e -> e.getAuthority()).toArray(String[]::new);
-		claims.put("auth", authorities);
+		claims.put("authorities", authorities);
 		return createToken(claims, userDetails.getUsername());
 	}
 	
 	private Claims extractAllClaims(String token) {
-		return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+		try {
+			Claims claims = Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+			return claims;
+		}
+		catch (SignatureException e) {
+			logger.log(Level.parse("Invalid JWT signature: {}"), e.getMessage());
+		} catch (MalformedJwtException e) {
+			logger.log(Level.parse("Invalid JWT token: {}"), e.getMessage());
+		} catch (ExpiredJwtException e) {
+			logger.log(Level.parse("JWT token is expired: {}"), e.getMessage());
+		} catch (UnsupportedJwtException e) {
+			logger.log(Level.parse("JWT token is unsupported: {}"), e.getMessage());
+		} catch (IllegalArgumentException e) {
+			logger.log(Level.parse("JWT claims string is empty: {}"), e.getMessage());
+		}
+		return null;
 	}
 	
 	private <T> T extractClaim(String token, Function<Claims, T> claimsResolver){

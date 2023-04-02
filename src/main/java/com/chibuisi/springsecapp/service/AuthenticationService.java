@@ -7,7 +7,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,15 +29,24 @@ public class AuthenticationService {
     @Autowired
     private MyUserDetailsService myUserDetailsService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     public String authenticate(AuthenticationRequest authenticationRequest) throws Exception {
+//        UserDetails userDetails =
+//                (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Authentication authentication;
         try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword()));
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(authenticationRequest.getUsernameOrEmail(),
+                            authenticationRequest.getPassword()));
         } catch (BadCredentialsException e) {
             log.info("Authentication processing failed");
-            throw new Exception("invalid Username or Password",e);
+            throw new Exception("Invalid Username or Password",e);
         }
-        final UserDetails userDetails = myUserDetailsService.loadUserByUsername(authenticationRequest.getUsername());
+        //final UserDetails userDetails = myUserDetailsService.loadUserByUsername(authenticationRequest.getUsernameOrEmail());
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
         final String jwt = jwtUtil.generateToken(userDetails);
         return jwt;
     }
