@@ -2,11 +2,9 @@ package com.chibuisi.springsecapp.service;
 
 import com.chibuisi.springsecapp.model.Role;
 import com.chibuisi.springsecapp.model.UserAccount;
-import com.chibuisi.springsecapp.model.UserRole;
+import com.chibuisi.springsecapp.model.AppRole;
 import com.chibuisi.springsecapp.user.UserAccountDTO;
-import com.chibuisi.springsecapp.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,6 +25,8 @@ public class MyUserDetailsService implements UserDetailsService {
 	private UserRepository userRepository;
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+	@Autowired
+	private AppRoleService appRoleService;
 
 	@Override
 	public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
@@ -50,25 +50,6 @@ public class MyUserDetailsService implements UserDetailsService {
 	        .disabled(false)
 	        .build();
 	}
-	public UserDetails loadUserByUsernameOrEmailAndPassword(String usernameOrEmail){
-		Optional<UserAccount> optionalUserAccount;
-
-		optionalUserAccount = userRepository.findUserAccountByUsername(usernameOrEmail);
-		if(!optionalUserAccount.isPresent())
-			optionalUserAccount = userRepository.findUserAccountByEmail(usernameOrEmail);
-		if(!optionalUserAccount.isPresent())
-			throw new UsernameNotFoundException("User " + usernameOrEmail + " not Found");
-		UserAccount userAccount = optionalUserAccount.get();
-		return org.springframework.security.core.userdetails.User
-				.withUsername(usernameOrEmail)
-				.password(passwordEncoder.encode(userAccount.getPassword()))
-				.authorities(userAccount.getRoles())
-				.accountExpired(false)
-				.accountLocked(false)
-				.credentialsExpired(false)
-				.disabled(false)
-				.build();
-	}
 
 	public UserAccountDTO saveUserAccount(UserAccountDTO userAccountDTO){
 		// todo validate userAccount against null values
@@ -85,20 +66,20 @@ public class MyUserDetailsService implements UserDetailsService {
 				.lastName(userAccountDTO.getLastname())
 				.password(passwordEncoder.encode(userAccountDTO.getPassword()))
 				.build();
-		UserRole userRole = UserRole.builder().roleName(Role.ROLE_USER).build();
-		userAccount.setRoles(Collections.singletonList(userRole));
+		AppRole appRole = appRoleService.findAppRole(Role.ROLE_USER);
+		if(appRole != null)
+			userAccount.setRoles(Collections.singletonList(appRole));
 		userRepository.save(userAccount);
 		return userAccountDTO;
 	}
 
-	@Deprecated
-	public Optional<UserAccountDTO> findUserByCredentials(String email, String username, String password){
+	public Optional<UserAccountDTO> findUserByCredentials(String emailOrEmail){
 		UserAccount userAccount;
 		Optional<UserAccount> optionalExisting = userRepository
-				.findUserAccountByEmail(email);
+				.findUserAccountByEmail(emailOrEmail);
 		if(!optionalExisting.isPresent())
 			optionalExisting = userRepository
-					.findUserAccountByUsername(username);
+					.findUserAccountByUsername(emailOrEmail);
 		if (!optionalExisting.isPresent())
 			return Optional.empty();
 		userAccount = optionalExisting.get();

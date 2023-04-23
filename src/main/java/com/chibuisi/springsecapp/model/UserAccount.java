@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "users")
+@Table(name = "user_account")
 public class UserAccount {
 
     @Id
@@ -36,11 +36,11 @@ public class UserAccount {
     @Column(name = "lastname", length = 216)
     private String lastName;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-            name = "users_roles",
+            name = "user_account_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private List<UserRole> roles = new ArrayList<>();
+    private List<AppRole> roles = new ArrayList<>();
 }

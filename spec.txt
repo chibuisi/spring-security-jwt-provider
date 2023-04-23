@@ -1,8 +1,8 @@
 - done
+use enum role to list roles
 
 
 - todo
-use enum role to list roles
 handle this exception in a controller advice
 validate userAccount against null values
 html escape user inputs

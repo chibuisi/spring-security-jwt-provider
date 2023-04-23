@@ -13,8 +13,8 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "roles")
-public class UserRole implements GrantedAuthority {
+@Table(name = "role")
+public class AppRole implements GrantedAuthority {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

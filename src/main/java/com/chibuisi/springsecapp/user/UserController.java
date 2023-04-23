@@ -19,10 +19,8 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity getUser(@RequestParam(required = false) String email,
-                                  @RequestParam(required = false) String username,
-                                  @RequestParam(required = false) String password){
-        Optional<UserAccountDTO> userAccountDTO = myUserDetailsService.findUserByCredentials(email, username, password);
+    public ResponseEntity getUser(@RequestParam(required = false) String user){
+        Optional<UserAccountDTO> userAccountDTO = myUserDetailsService.findUserByCredentials(user);
         if(!userAccountDTO.isPresent())
             return new ResponseEntity("Not Found", HttpStatus.NOT_FOUND);
         else
